@@ -1,12 +1,15 @@
 use crate::{
     config::Config,
-    pages::search::{self, SearchPage},
+    pages::{
+        manage::{self, ManagePage},
+        search::{self, SearchPage},
+    },
     ui::{draw_ui, rgb},
 };
 use anyhow::{anyhow, Result};
 use crossterm::event::{self, Event, KeyCode};
 use std::time::{Duration, Instant};
-use tui::{backend::Backend, Terminal, style::Color};
+use tui::{backend::Backend, style::Color, Terminal};
 
 const TAB_COUNT: u8 = 3;
 
@@ -18,6 +21,7 @@ pub struct App {
     pub error_timer: Option<Instant>,
 
     pub search_page: SearchPage,
+    pub manage_page: ManagePage,
 }
 
 impl App {
@@ -78,6 +82,8 @@ pub fn run_app<B: Backend>(
 
             let can_use = match app.tab {
                 0 => search::event(app, event.clone()),
+                1 => manage::event(app, event.clone()),
+                2 => true,
                 _ => return Err(anyhow!("Tab index out of range")),
             };
 

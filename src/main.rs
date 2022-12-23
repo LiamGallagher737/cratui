@@ -1,19 +1,19 @@
 use anyhow::Result;
-use app::{App, run_app};
+use app::{run_app, App};
 use config::{load_config, save_config};
 use crossterm::{
-    event::{EnableMouseCapture, DisableMouseCapture},
+    event::{DisableMouseCapture, EnableMouseCapture},
     execute,
-    terminal::{enable_raw_mode, EnterAlternateScreen, disable_raw_mode, LeaveAlternateScreen},
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use std::{io, time::Duration};
 use tui::{backend::CrosstermBackend, Terminal};
 
 mod app;
 mod cargo;
-mod ui;
 mod config;
 mod pages;
+mod ui;
 
 const BINARY_NAME: &str = "cratui";
 

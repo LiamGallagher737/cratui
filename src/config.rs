@@ -12,6 +12,7 @@ pub struct Config {
     pub colors: Colors,
     pub favourites: Favourites,
     pub search: Search,
+    pub mouse: Mouse,
 }
 
 #[derive(SmartDefault, Serialize, Deserialize)]
@@ -39,8 +40,14 @@ pub struct Favourites {
 
 #[derive(SmartDefault, Serialize, Deserialize)]
 pub struct Search {
-    #[default(20)]
+    #[default(10)]
     pub max_pages: u8,
+}
+
+#[derive(SmartDefault, Serialize, Deserialize)]
+pub struct Mouse {
+    #[default(true)]
+    pub enabled: bool,
 }
 
 pub fn load_config() -> Result<Config> {
@@ -48,7 +55,7 @@ pub fn load_config() -> Result<Config> {
     if !path.exists() {
         fs::create_dir_all(
             path.parent()
-                .ok_or(anyhow!("Unable to get directory from config path"))?,
+                .ok_or_else(|| anyhow!("Unable to get directory from config path"))?,
         )?;
         save_config(Config::default())?;
         return Ok(Config::default());
@@ -65,7 +72,7 @@ pub fn save_config(config: Config) -> Result<()> {
 
 fn config_path() -> Result<PathBuf> {
     let mut path = BaseDirs::new()
-        .ok_or(anyhow!("Failed to get config path"))?
+        .ok_or_else(|| anyhow!("Failed to get config path"))?
         .config_dir()
         .to_path_buf();
     path.push(BINARY_NAME);

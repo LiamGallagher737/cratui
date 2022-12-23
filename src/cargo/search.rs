@@ -7,6 +7,7 @@ const UA_HEADER_KEY: &str = "User-Agent";
 const UA_HEADER_VALUE: &str = "cratui (https://github.com/LiamGallagher/cratui)";
 
 pub fn search(query: &str, page: usize, limit: usize) -> Result<SearchResponse> {
+    let limit = limit.min(100); // Crates.io only allows 100 per page
     let url = format!("{API}?q={query}&page={}&per_page={limit}", page + 1);
 
     let res = ureq::get(&url)
@@ -26,7 +27,7 @@ pub struct SearchResponse {
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Crate {
     pub id: String,
-    pub description: String,
+    pub description: Option<String>,
     pub downloads: usize,
     pub recent_downloads: usize,
     // pub homepage: Option<String>,
