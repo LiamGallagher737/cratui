@@ -4,7 +4,7 @@ use crate::{
     ui::rgb,
 };
 use anyhow::Result;
-use crossterm::event::{Event, KeyCode};
+use crossterm::event::{Event, KeyCode, MouseEventKind};
 use smart_default::SmartDefault;
 use std::thread::{self, JoinHandle};
 use tui::{
@@ -157,8 +157,8 @@ pub fn event(app: &mut App, e: Event) -> bool {
                     app.search_page.expanded_help_message = !app.search_page.expanded_help_message
                 }
                 // Movement
-                KeyCode::Up | KeyCode::Char('j') => app.search_page.previous_index(),
-                KeyCode::Down | KeyCode::Char('k') => app.search_page.next_index(),
+                KeyCode::Up | KeyCode::Char('k') => app.search_page.previous_index(),
+                KeyCode::Down | KeyCode::Char('j') => app.search_page.next_index(),
                 KeyCode::Left | KeyCode::Char('h') => app.search_page.previous_page(),
                 KeyCode::Right | KeyCode::Char('l') => app.search_page.next_page(),
                 // Links
@@ -225,12 +225,30 @@ pub fn event(app: &mut App, e: Event) -> bool {
         }
         app.search_page.per_page = (height as usize - 13) / 4 + 1;
         if let Some(state) = &mut app.search_page.results_state {
-            let crates: Vec<Crate> = state.results.to_owned().into_iter().flatten().collect();
+            let crates: Vec<Crate> = state.results.iter().flatten().cloned().collect();
             let pages = crates
                 .chunks(app.search_page.per_page)
                 .map(|chunk| chunk.to_vec())
                 .collect();
             state.results = pages;
+        }
+    } else if let Event::Mouse(e) = e {
+        if !app.config.mouse.enabled {
+            return true;
+        }
+        if let MouseEventKind::Moved = e.kind {
+            if e.row < 7 {
+                return false;
+            }
+            let index = (e.row - 7) / 4;
+            if let Some(state) = &mut app.search_page.results_state {
+                if state.results.is_empty() {
+                    return false;
+                }
+                if state.results[state.page].len() as u16 > index {
+                    state.index = index as usize;
+                }
+            }
         }
     }
 
@@ -272,6 +290,10 @@ pub fn update<B: Backend>(f: &mut Frame<B>, app: &mut App, area: Rect) {
         search_bar_chunk,
     );
 
+    if query_state.active {
+        f.set_cursor(query_state.cursor as u16 + 3, 5);
+    }
+
     if let Some(state) = app.search_page.results_state.as_mut() {
         if let Some(handle) = state.request_handle.as_mut() {
             if handle.is_finished() {
@@ -279,7 +301,7 @@ pub fn update<B: Backend>(f: &mut Frame<B>, app: &mut App, area: Rect) {
                 let res = handle.join().unwrap().unwrap();
                 state.results.push(res.crates);
                 state.loaded_all = res.meta.next_page.is_none()
-                    || state.results.len() > app.config.search.max_pages as usize;
+                    || state.results.len() >= app.config.search.max_pages as usize;
             }
         } else if !state.loaded_all {
             let query = state.query.to_owned();
@@ -323,7 +345,12 @@ pub fn update<B: Backend>(f: &mut Frame<B>, app: &mut App, area: Rect) {
                 ]),
                 Spans::from(vec![
                     Span::styled(prefix, style),
-                    Span::styled(c.description.to_owned(), style.add_modifier(Modifier::DIM)),
+                    Span::styled(
+                        c.description
+                            .to_owned()
+                            .unwrap_or_else(|| "No description".into()),
+                        style,
+                    ),
                 ]),
                 Spans::from(vec![
                     Span::styled(prefix, style),

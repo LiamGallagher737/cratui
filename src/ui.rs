@@ -1,4 +1,7 @@
-use crate::{app::App, pages::search};
+use crate::{
+    app::App,
+    pages::{manage, search},
+};
 use tui::{
     backend::Backend,
     layout::{Constraint, Layout, Rect},
@@ -21,6 +24,7 @@ pub fn draw_ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
 
     match app.tab {
         0 => search::update(f, app, chunks[2]),
+        1 => manage::update(f, app, chunks[2]),
         _ => {}
     }
 }
