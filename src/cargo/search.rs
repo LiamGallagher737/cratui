@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 // User Agent header, required by crates.io api
 const UA_HEADER_KEY: &str = "User-Agent";
-const UA_HEADER_VALUE: &str = "cratui (https://github.com/LiamGallagher/cratui)";
+const UA_HEADER_VALUE: &str = "cratui (https://github.com/LiamGallagher737/cratui)";
 
 pub fn search(query: &str, page: usize, limit: usize) -> Result<SearchResponse> {
     let limit = limit.min(100); // Crates.io only allows 100 per page
